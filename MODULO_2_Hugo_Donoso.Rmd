@@ -1,0 +1,109 @@
+---
+title: "MODULO II: Análisis Exploratorio"
+author: "Hugo Donoso"
+date: "2024-08-21"
+always_allow_html: true
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(openxlsx)
+library (ggplot2)
+library(reshape2)
+library(dplyr)
+library(readxl)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(plotly)
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+datos<- read.xlsx("E:/Betametrica/Modulo II/Base.xlsx", sheet = "Hoja1", detectDates = T )
+datos$Trimestres <- seq(as.Date("2000/03/01"),
+                        as.Date("2024/03/01"), 
+                        by="quarter")
+```
+
+Graficos con ggplot
+
+```{r}
+ggplot(data=datos)+
+        aes(x=Trimestres)+
+        aes(y=`Manufactura.de.productos.no.alimenticios`)+
+        geom_line(color="red", alpha=0.5, linewidth=1)+
+         geom_point(color="green",alpha=0.3, size=2)+
+         geom_hline(yintercept = mean(datos$`Manufactura.de.productos.no.alimenticios`,na.rm = TRUE),
+                    col="purple")
+```
+
+boxplot usando ggplot2
+
+```{r}
+ggplot(data = datos) +
+  aes(x = "", y = `Manufactura.de.productos.no.alimenticios`) +  # Ajusta el nombre de la columna según tus datos
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Boxplot de Manufacturas", y = "Manufacturas (en millones)") +
+  theme_minimal()
+```
+
+GRÁFICO DE BARRAS NO APILADAS PARA 2 VARIABLES
+
+Crear un dataframe con las dos variables
+
+```{r}
+datos_barras <- datos %>%
+  select(Trimestres, Refinados_de_petroleo = Refinados.de.petroleo, Comercio = `Comercio`)
+
+datos_barras_long <- melt(datos_barras, id.vars = "Trimestres")
+```
+
+# Crear el gráfico de barras
+
+```{r}
+ggplot(data = datos_barras_long) +
+  aes(x = Trimestres, y = value, fill = variable) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Refinados de petroleo vs Comercio",
+       x = "Trimestres",
+       y = "Millones de USD",
+       fill = "Variable") +
+  theme_minimal()
+
+```
+
+GRAFICO DE LINEAS CON FACET
+
+SE Escoge dos variables: Comercio y Explotación de minas y canteras
+
+```{r}
+
+ggplot(data = datos_barras_long) +
+  aes(x = Trimestres, y = value, color = variable) +
+  geom_line(linewidth = 1) +
+  geom_smooth(method = "lm", se = FALSE, linetype = "dashed") +  # Añadir línea de tendencia
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(title = "Comercio vs Explotacion de minas y canteras",
+       x = "Trimestres",
+       y = "Millones de USD") +
+  theme_minimal()
+```
+
+Gráfico usando dygraphs o plotly
+
+```{r}
+p <- ggplot(data = datos) +
+  aes(x = Trimestres, y = `Comercio`) +
+  geom_line(color = "orange", alpha = 0.5, linewidth = 1) +
+  geom_point(color = "blue", alpha = 0.3, size = 2) +
+  geom_hline(yintercept = mean(datos$`Comercio`, na.rm = TRUE),
+             col = "grey")
+
+
+interactive_plot <- ggplotly(p)
+
+ggplotly(p)
+
+```
